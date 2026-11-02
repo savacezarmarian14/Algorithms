@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Union-Find (Disjoint Set Union)</title>
+<style>
+:root{--surface-0:#faf9f5;--surface-1:#f1efe8;--text-primary:#1f1e1d;--text-secondary:#5f5e5a;--text-muted:#888780;--border:rgba(0,0,0,.12);--border-strong:rgba(0,0,0,.25);--border-stronger:rgba(0,0,0,.45);--bg-warning:#FAEEDA;--border-warning:#EF9F27;--text-warning:#854F0B;--bg-accent:#E6F1FB;--border-accent:#85B7EB;--text-accent:#185FA5;--font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--radius:8px}
+@media (prefers-color-scheme:dark){:root{--surface-0:#1f1e1d;--surface-1:#2c2c2a;--text-primary:#f1efe8;--text-secondary:#b4b2a9;--text-muted:#888780;--border:rgba(255,255,255,.12);--border-strong:rgba(255,255,255,.28);--border-stronger:rgba(255,255,255,.5);--bg-warning:#633806;--border-warning:#EF9F27;--text-warning:#FAC775;--bg-accent:#0C447C;--border-accent:#85B7EB;--text-accent:#B5D4F4}}
+body{margin:0;background:var(--surface-0);color:var(--text-primary);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:680px;margin:2rem auto;padding:0 1rem}
+h1{font-size:20px;font-weight:500;margin:0 0 4px}
+.sub{font-family:var(--font-mono);font-size:13px;color:var(--text-secondary);margin:0 0 12px}
+.lg{display:inline-flex;align-items:center;gap:6px;margin-right:16px;font-size:13px;color:var(--text-secondary)}
+.sw{width:14px;height:14px;border-radius:50%;display:inline-block}
+.pa{display:flex;gap:6px;margin:6px 0 0}
+.pc{width:52px;border:0.5px solid var(--border-strong);border-radius:var(--radius);text-align:center;padding:4px 0;font-family:var(--font-mono);font-size:14px}
+.pc small{display:block;font-size:11px;color:var(--text-muted);font-family:system-ui,sans-serif}
+.pc.ch{background:var(--bg-warning);color:var(--text-warning);border-color:var(--border-warning)}
+button{background:transparent;color:var(--text-primary);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:6px 14px;font-size:15px;cursor:pointer}
+button:hover{background:var(--surface-1)}
+</style>
+</head>
+<body>
+<main>
+<h1>Union-Find (DSU, Disjoint Set Union)</h1>
+<p class="sub">exemplu: edges = [[1,2],[3,4],[1,3],[2,4]] (graf neorientat)</p>
+<p class="sub" style="font-family:inherit">folosit la: 684 Redundant Connection, 1319 Number of Operations to Make Network Connected, Kruskal (MST, Minimum Spanning Tree)</p>
+<div style="padding:0.5rem 0">
+<span class="lg"><span class="sw" style="background:var(--bg-accent);border:1px solid var(--border-accent)"></span>root (căpitan)</span>
+<span class="lg"><span class="sw" style="background:var(--surface-1);border:1px solid var(--border-strong)"></span>nod obișnuit</span>
+<span class="lg"><span class="sw" style="background:var(--bg-warning);border:1px solid var(--border-warning)"></span>pe drumul lui find</span>
+</div>
+<svg id="g" width="100%" viewBox="0 0 680 290"><defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs><g id="ed"></g><g id="nd"></g></svg>
+<p id="msg" style="font-size:15px;margin:4px 0 8px;min-height:52px;line-height:1.6"></p>
+<div style="font-size:13px;color:var(--text-secondary)">parent[]</div>
+<div class="pa" id="pa"></div>
+<div style="display:flex;align-items:center;gap:12px;margin-top:14px">
+<button id="pv" aria-label="Pasul anterior">&larr;</button>
+<button id="nx" aria-label="Pasul următor">&rarr;</button>
+<span id="pos" style="font-size:13px;color:var(--text-secondary)"></span>
+<span style="font-size:12px;color:var(--text-muted)">(sau săgețile de la tastatură)</span>
+</div>
+</main>
+<script>
+const L={
+A:{1:[150,170],2:[270,170],3:[410,170],4:[530,170]},
+B:{2:[200,80],1:[200,210],3:[430,145],4:[550,145]},
+C:{2:[200,80],1:[200,210],4:[480,80],3:[480,210]},
+D:{4:[340,50],2:[220,145],3:[460,145],1:[220,245]},
+E:{4:[340,50],2:[220,170],3:[340,170],1:[460,170]}};
+const S=[
+{l:'A',p:[1,2,3,4],h:[],m:"Start: parent[i] = i. Fiecare nod e singur în echipa lui, deci e propriul căpitan (root)."},
+{l:'A',p:[1,2,3,4],h:[1,2],e:[1,2],m:"Muchia [1,2]: find(1) = 1, find(2) = 2. Root-uri diferite, deci union."},
+{l:'B',p:[2,2,3,4],h:[],ch:[1],m:"parent[1] = 2. Echipa {1,2} are căpitanul 2."},
+{l:'B',p:[2,2,3,4],h:[3,4],e:[3,4],m:"Muchia [3,4]: find(3) = 3, find(4) = 4. Diferite, deci union."},
+{l:'C',p:[2,2,4,4],h:[],ch:[3],m:"parent[3] = 4. Acum ai două echipe: {1,2} cu căpitanul 2 și {3,4} cu căpitanul 4."},
+{l:'C',p:[2,2,4,4],h:[1,2,3,4],e:[1,3],m:"Muchia [1,3]: find(1) urcă 1 → 2, 2 e root, deci 2. find(3) urcă 3 → 4, deci 4. Diferite, deci union."},
+{l:'D',p:[2,4,4,4],h:[],ch:[2],m:"Union pe ROOT-uri: parent[2] = 4, NU parent[1] = 3. Dacă legai 1 de 3, nodul 2 ar fi rămas root separat și echipa s-ar fi rupt."},
+{l:'D',p:[2,4,4,4],h:[2,4],e:[2,4],red:1,m:"Muchia [2,4]: find(2) urcă 2 → 4, deci 4. find(4) = 4. EGALE: 2 și 4 sunt deja în aceeași componentă, deci nu faci union. Într-un graf neorientat, muchia asta ar închide un ciclu."},
+{l:'D',p:[2,4,4,4],h:[1,2,4],m:"Bonus, path compression: find(1) urcă 1 → 2 → 4. Odată ce știi că root-ul e 4..."},
+{l:'E',p:[4,4,4,4],h:[],ch:[1],m:"...faci parent[1] = 4 direct. Următorul find(1) face un singur pas. Împreună cu union by rank/size: aproape O(1) per operație."}
+];
+let k=0;const NS="http://www.w3.org/2000/svg",R=22;
+function el(t,a){const e=document.createElementNS(NS,t);for(const x in a)e.setAttribute(x,a[x]);return e;}
+function seg(P,a,b,pad){const[x1,y1]=P[a],[x2,y2]=P[b];const dx=x2-x1,dy=y2-y1,d=Math.hypot(dx,dy),ux=dx/d,uy=dy/d;return[x1+ux*R,y1+uy*R,x2-ux*(R+pad),y2-uy*(R+pad)];}
+function draw(){
+const s=S[k],P=L[s.l],ed=document.getElementById('ed'),nd=document.getElementById('nd');ed.innerHTML='';nd.innerHTML='';
+for(let i=1;i<=4;i++){const p=s.p[i-1];if(p!==i){const[a,b,c,d]=seg(P,i,p,4);const hot=s.ch&&s.ch.includes(i);ed.appendChild(el('line',{x1:a,y1:b,x2:c,y2:d,stroke:hot?'#BA7517':'var(--border-stronger)','stroke-width':hot?2.5:1.2,'marker-end':'url(#ah)'}));}}
+if(s.e){const[a,b,c,d]=seg(P,s.e[0],s.e[1],0);ed.appendChild(el('line',{x1:a,y1:b,x2:c,y2:d,stroke:s.red?'#E24B4A':'#7F77DD','stroke-width':2,'stroke-dasharray':'6 5'}));}
+for(let i=1;i<=4;i++){const[x,y]=P[i];const root=s.p[i-1]===i,hl=s.h.includes(i);
+let f='var(--surface-1)',st='var(--border-strong)',tc='var(--text-primary)';
+if(root){f='var(--bg-accent)';st='var(--border-accent)';tc='var(--text-accent)';}
+if(hl){f='var(--bg-warning)';st='var(--border-warning)';tc='var(--text-warning)';}
+nd.appendChild(el('circle',{cx:x,cy:y,r:R,fill:f,stroke:st,'stroke-width':root?2:1}));
+const t=el('text',{x:x,y:y,'text-anchor':'middle','dominant-baseline':'central','font-size':15,'font-weight':500,fill:tc});t.textContent=i;nd.appendChild(t);}
+document.getElementById('msg').textContent=s.m;
+const pa=document.getElementById('pa');pa.innerHTML='';
+for(let i=1;i<=4;i++){const d=document.createElement('div');d.className='pc'+(s.ch&&s.ch.includes(i)?' ch':'');d.innerHTML='<small>['+i+']</small>'+s.p[i-1];pa.appendChild(d);}
+document.getElementById('pos').textContent='Pasul '+(k+1)+' / '+S.length;}
+function go(d){k=(k+d+S.length)%S.length;draw();}
+document.getElementById('nx').onclick=()=>go(1);
+document.getElementById('pv').onclick=()=>go(-1);
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')go(1);if(e.key==='ArrowLeft')go(-1);});
+draw();
+</script>
+</body>
+</html>
